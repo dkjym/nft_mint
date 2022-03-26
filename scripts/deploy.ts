@@ -1,21 +1,52 @@
-import { ethers } from "hardhat";
+import { Contract } from "ethers";
+import { ethers, network } from "hardhat";
+import path from "path";
 
+// This is a script for deploying your contracts. You can adapt it to deploy
+// yours, or create new ones.
 async function main() {
-  const factory = await ethers.getContractFactory("MyEpicNFT");
-  const contract = await factory.deploy();
+  // This is just a convenience check
+  if (network.name === "hardhat") {
+    console.warn(
+      "You are trying to deploy a contract to the Hardhat Network, which" +
+        "gets automatically created and destroyed every time. Use the Hardhat" +
+        " option '--network localhost'"
+    );
+  }
 
-  await contract.deployed();
+  // ethers is avaialble in the global scope
+  const [deployer] = await ethers.getSigners();
+  console.log(
+    "Deploying the contracts with the account:",
+    await deployer.getAddress()
+  );
 
-  console.log("contract deployed to:", contract.address);
+  console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  // makeAnEpicNFT 関数を呼び出す。NFT が Mint される。
-  let txn = await contract.makeAnEpicNFT();
-  // Minting が仮想マイナーにより、承認されるのを待つ。
-  await txn.wait();
-  // makeAnEpicNFT 関数をもう一度呼び出す。NFT がまた Mint される。
-  txn = await contract.makeAnEpicNFT();
-  // Minting が仮想マイナーにより、承認されるのを待つ。
-  await txn.wait();
+  const nftContractFactory = await ethers.getContractFactory("MyEpicNFT");
+
+  const nftContract = await nftContractFactory.deploy();
+
+  await nftContract.deployed();
+
+  console.log("Contract address:", nftContract.address);
+
+  // We also save the contract's artifacts and address in the frontend directory
+  saveFrontendFiles(nftContract);
+}
+
+function saveFrontendFiles(contract: Contract) {
+  const fs = require("fs");
+  const contractsDir = path.join(__dirname, "/../frontend/src/contracts");
+
+  if (!fs.existsSync(contractsDir)) {
+    fs.mkdirSync(contractsDir);
+  }
+
+  fs.writeFileSync(
+    contractsDir + "/contract-address.json",
+    JSON.stringify({ ContractAddress: contract.address }, undefined, 2)
+  );
 }
 
 main().catch((error) => {
