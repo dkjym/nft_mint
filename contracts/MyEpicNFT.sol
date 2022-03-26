@@ -14,6 +14,8 @@ contract MyEpicNFT is ERC721URIStorage {
     // _tokenIdsを初期化（_tokenIds = 0）
     Counters.Counter private _tokenIds;
 
+    uint256 private constant MAX_NUMBER_OF_NFT = 50;
+
     // SVGコードを作成します。
     // 変更されるのは、表示される単語だけです。
     // すべてのNFTにSVGコードを適用するために、baseSvg変数を作成します。
@@ -109,9 +111,17 @@ contract MyEpicNFT is ERC721URIStorage {
         return thirdWords[rand];
     }
 
+    function getCount() public view returns (uint256) {
+        return _tokenIds.current();
+    }
+
     function makeAnEpicNFT() public {
         // 現在のtokenIdを取得します。tokenIdは0から始まります。
         uint256 newItemId = _tokenIds.current();
+
+        if (newItemId >= MAX_NUMBER_OF_NFT) {
+            return;
+        }
 
         // 3つの配列からそれぞれ1つの単語をランダムに取り出します。
         string memory first = pickRandomFirstWord(newItemId);
